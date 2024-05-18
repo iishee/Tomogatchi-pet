@@ -34,6 +34,8 @@ public class Cave extends JPanel {
         setLayout(null); // Set layout to null for absolute positioning
         hunger.setBounds(10, 10, 200, 30); // Position and size of the hunger bar
         add(hunger); // Add the hunger bar to the panel
+        hunger.setForeground(Color.red);
+        fill();
 
         originalFrames = new Image[FRAME_COUNT];
         loadFrames();
@@ -65,6 +67,9 @@ public class Cave extends JPanel {
 
             @Override
             public void mouseReleased(MouseEvent e) {
+                if (draggedImage != null) {
+                    draggedImage.startFalling(); // Start falling when mouse is released
+                }
                 draggedImage = null; // Stop dragging when mouse is released
             }
 
@@ -114,6 +119,7 @@ public class Cave extends JPanel {
     private void handleMouseDragged(MouseEvent e) {
         if (draggedImage != null) {
             draggedImage.setPosition(e.getX() - draggedImage.getOffsetX(), e.getY() - draggedImage.getOffsetY());
+            draggedImage.stopFalling(); // Stop falling while being dragged
             repaint();
         }
     }
@@ -218,7 +224,7 @@ public class Cave extends JPanel {
 
     // Method to decrement the hunger bar
     public void fill() {
-        Timer fillTimer = new Timer(50, e -> {
+        Timer fillTimer = new Timer(2000, e -> {
             if (count > 0) {
                 count--;
                 hunger.setValue(count);
@@ -236,11 +242,34 @@ public class Cave extends JPanel {
         private int y;
         private int offsetX;
         private int offsetY;
+        private Timer fallTimer;
+        private static final int FALL_DELAY = 30; // Delay between fall updates in milliseconds
+        private static final int FALL_SPEED = 4; // Speed of falling
 
         public DraggableImage(Image image, int offsetX, int offsetY) {
             this.image = image;
             this.offsetX = offsetX;
             this.offsetY = offsetY;
+            initFallTimer();
+        }
+
+        // Initialize fall timer
+        private void initFallTimer() {
+            fallTimer = new Timer(FALL_DELAY, e -> {
+                y += FALL_SPEED; // Update the y position to simulate falling
+                if (y >= 1080 - 100) {
+                    y = 1080 - 100;
+                    fallTimer.stop(); // Stop falling when the image reaches the bottom
+                }
+            });
+        }
+
+        public void startFalling() {
+            fallTimer.start();
+        }
+
+        public void stopFalling() {
+            fallTimer.stop();
         }
 
         public void setPosition(int x, int y) {
