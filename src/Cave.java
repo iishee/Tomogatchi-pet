@@ -27,6 +27,7 @@ public class Cave extends JPanel {
     private DraggableImage draggedImage = null; // Reference to the currently dragged image
     private int count = 100; // Initial value for the hunger bar
     private JProgressBar hunger; // Progress bar to represent hunger
+    private boolean isEating = false; // Flag to indicate if the bear is eating
 
     public Cave() {
         hunger = new JProgressBar();
@@ -162,8 +163,8 @@ public class Cave extends JPanel {
     private void loadFrames() {
         try {
             for (int i = 0; i < FRAME_COUNT; i++) {
-                String imagePath = "C:\\Users\\User\\IdeaProjects\\TOMO\\src\\BEar" + (i + 1) + ".png";
-                originalFrames[i] = ImageIO.read(new File(imagePath));
+                String bear = "C:\\Users\\User\\IdeaProjects\\TOMO\\src\\BEar" + (i + 1) + ".png";
+                originalFrames[i] = ImageIO.read(new File(bear));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -177,6 +178,7 @@ public class Cave extends JPanel {
         drawAnimationFrame(g);
         drawImageIcon(g);
         drawDraggableImages(g);
+        checkForEating(); // Check if the bear should eat an apple
     }
 
     // Method to draw the cave background
@@ -233,6 +235,47 @@ public class Cave extends JPanel {
             }
         });
         fillTimer.start();
+    }
+
+    // Method to check if the bear should eat an apple
+    private void checkForEating() {
+        if (!isEating) {
+            for (int i = 0; i < draggableImages.size(); i++) {
+                DraggableImage apple = draggableImages.get(i);
+                if (isNearBear(apple)) {
+                    startEating(apple);
+                    draggableImages.remove(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Method to check if an apple is near the bear
+    private boolean isNearBear(DraggableImage apple) {
+        int bearX = mirrored ? getWidth() - xPos : xPos;
+        int bearY = getHeight() - originalFrames[currentFrameIndex].getHeight(null) * 10;
+        int bearWidth = originalFrames[currentFrameIndex].getWidth(null) * 10;
+        int bearHeight = originalFrames[currentFrameIndex].getHeight(null) * 10;
+        int appleX = apple.getX();
+        int appleY = apple.getY();
+        int appleWidth = 100; // Width of the apple image
+        int appleHeight = 100; // Height of the apple image
+
+        return appleX < bearX + bearWidth && appleX + appleWidth > bearX &&
+                appleY < bearY + bearHeight && appleY + appleHeight > bearY;
+    }
+
+    // Method to start eating an apple
+    private void startEating(DraggableImage apple) {
+        isEating = true;
+        Timer eatingTimer = new Timer(500, e -> {
+            isEating = false;
+            count = Math.min(count + 10, 100); // Increase hunger by 10, max 100
+            hunger.setValue(count);
+            ((Timer) e.getSource()).stop();
+        });
+        eatingTimer.start();
     }
 
     // Class to represent a draggable image
